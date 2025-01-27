@@ -13,7 +13,8 @@
 ## Выполнение задания:
 * Примечание: Домашняя работа выполнялась на Debian 12
 ### 1. Установите Docker на хост машину.   
-### 2. Установите Docker Compose - как плагин, или как отдельное приложение:   
+### 2. Установите Docker Compose - как плагин, или как отдельное приложение.  
+### 3. Создайте свой кастомный образ nginx на базе alpine. После запуска nginx должен отдавать кастомную страницу (достаточно изменить дефолтную страницу nginx):
 Установим Docker,  Docker Compose и curl:
 ```
 apt install -y docker docker-compose curl
@@ -345,3 +346,239 @@ Successfully tagged nginxotus:latest
 ```
 docker images
 ```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+nginxotus    latest    c31e013e6238   9 seconds ago   47MB
+nginx        alpine    93f9c72967db   2 months ago    47MB
+```
+</details>
+
+Запустим наш контейнер:
+```
+docker run -d --name webserver -p 8080:80 nginxotus
+```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+c894b1c821c7a6e1e6c9d498a9dd2b105e03369637697ff434570183b6a79623
+```
+</details>
+
+Посмотрим запущенные контейнеры:
+```
+docker ps
+```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+CONTAINER ID   IMAGE       COMMAND                  CREATED         STATUS         PORTS                                   NAMES
+c894b1c821c7   nginxotus   "/docker-entrypoint.…"   7 seconds ago   Up 6 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   webserver
+
+```
+</details>
+
+Попробуем зайти на Nginx в нашем контейнере:
+
+```
+curl 127.0.0.1:8080
+```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+<h1><center>Test OTUS NGIX docker container</center></h1>
+```
+</details>
+
+Зарегистрируемся на Docker Hub.   
+Далее, выполним команду для подключения к Docker Hub:
+
+```
+docker login
+```
+
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+Username: alexlikh
+Password:
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+```
+</details>
+
+Выполним тегирование образа:
+```
+docker tag nginxotus alexlikh/nginxotus:latest
+```
+
+Выполним загрузку Docker-образа на Docker Hub:
+```
+docker push alexlikh/nginxotus:latest
+```
+
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+The push refers to repository [docker.io/alexlikh/nginxotus]
+1eb53152457a: Pushed
+5a760029e979: Mounted from library/nginx
+23625999797d: Mounted from library/nginx
+9aa22afcf27f: Mounted from library/nginx
+59a5cb944b91: Mounted from library/nginx
+598e577f3a23: Mounted from library/nginx
+fd5f65a144ef: Mounted from library/nginx
+a8903c9578e9: Mounted from library/nginx
+ce5a8cde9eee: Mounted from library/nginx
+latest: digest: sha256:18c268bbb778f4f68021e16dcd35c86f286b571d81f3f004ef327b6f1d9eefc9 size: 2196
+```
+</details>
+
+Посмотрим на запущенные докеры:
+```
+docker ps
+```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+c894b1c821c7   nginxotus   "/docker-entrypoint.…"   13 minutes ago   Up 13 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp   webserver
+```
+</details>
+Остановим запущенный докер:
+
+```
+docker stop c894
+```
+
+Посмотрим на docker контейнеры в системе:
+
+```
+docker images -a
+```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+REPOSITORY           TAG       IMAGE ID       CREATED          SIZE
+alexlikh/nginxotus   latest    c31e013e6238   15 minutes ago   47MB
+nginxotus            latest    c31e013e6238   15 minutes ago   47MB
+nginx                alpine    93f9c72967db   2 months ago     47MB
+```
+</details>
+
+Удалим все docker контейнеры:
+
+```
+docker rmi -f c31 93f
+```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+Untagged: alexlikh/nginxotus:latest
+Untagged: alexlikh/nginxotus@sha256:18c268bbb778f4f68021e16dcd35c86f286b571d81f3f004ef327b6f1d9eefc9
+Untagged: nginxotus:latest
+Deleted: sha256:c31e013e6238f96e07ae721a0696801d64d5e46f5ce5da06a826741ccbec0faf
+Untagged: nginx:alpine
+Untagged: nginx@sha256:814a8e88df978ade80e584cc5b333144b9372a8e3c98872d07137dbf3b44d0e4
+Deleted: sha256:93f9c72967dbcfaffe724ae5ba471e9568c9bbe67271f53266c84f3c83a409e3
+```
+</details>
+
+Скачаем наш образ с Docker Hub:
+
+```
+docker pull alexlikh/nginxotus
+```
+
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+Using default tag: latest
+latest: Pulling from alexlikh/nginxotus
+66a3d608f3fa: Already exists
+58290db888fa: Already exists
+5d777e0071f6: Already exists
+dbcfe8732ee6: Already exists
+37d775ecfbb9: Already exists
+e0350d1fd4dd: Already exists
+1f4aa363b71a: Already exists
+e74fff0a393a: Already exists
+559fb4d11d2d: Already exists
+Digest: sha256:18c268bbb778f4f68021e16dcd35c86f286b571d81f3f004ef327b6f1d9eefc9
+Status: Downloaded newer image for alexlikh/nginxotus:latest
+docker.io/alexlikh/nginxotus:latest
+```
+</details>
+
+Проверим докер контейнеры в системе:
+
+```
+docker images
+```
+
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+REPOSITORY           TAG       IMAGE ID       CREATED        SIZE
+alexlikh/nginxotus   latest    c31e013e6238   11 hours ago   47MB
+```
+</details>
+
+Запустим докер, скаченный с Docker Hub:
+
+```
+docker run -d --name webserv -p 8080:80 alexlikh/nginxotus
+```
+
+Посмотрим запущенные контейнеры:
+```
+docker ps
+```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+CONTAINER ID   IMAGE                COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+28824af7e63d   alexlikh/nginxotus   "/docker-entrypoint.…"   29 seconds ago   Up 28 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   webserv
+
+```
+</details>
+
+Попробуем зайти на Nginx в нашем контейнере:
+
+```
+curl 127.0.0.1:8080
+```
+<details>
+<summary> результат выполнения команды: </summary>
+
+```
+<h1><center>Test OTUS NGIX docker container</center></h1>
+```
+</details>   
+   
+
+### 4. Определите разницу между контейнером и образом.   
+### 5. Вывод опишите в домашнем задании.   
+
+Docker-образ — это статический файл, который содержит все необходимые компоненты для запуска контейнера   
+Docker-контейнер — это запущенная инстанция Docker-образа   
+   
+### 6. Ответьте на вопрос: Можно ли в контейнере собрать ядро?   
+
+В Docker-контейнере можно собрать ядро. Для этого, контейнер необходимо запустить с расширенными правами (ключ: --privileged)
